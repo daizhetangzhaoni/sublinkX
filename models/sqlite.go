@@ -3,6 +3,7 @@ package models
 import (
 	"log"
 	"os"
+	"sublink/utils"
 
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
@@ -37,15 +38,21 @@ func InitSqlite() {
 	// 初始化用户数据
 	err = db.First(&User{}).Error
 	if err == gorm.ErrRecordNotFound {
+		initPassword := os.Getenv("SUBLINK_INIT_PASSWORD")
+		if initPassword == "" {
+			initPassword = utils.RandString(16)
+		}
 		admin := &User{
 			Username: "admin",
-			Password: "123456",
+			Password: initPassword,
 			Role:     "admin",
 			Nickname: "管理员",
 		}
 		err = admin.Create()
 		if err != nil {
 			log.Println("初始化添加用户数据失败")
+		} else {
+			log.Printf("初始化管理员账号成功，请及时修改密码。username=admin password=%s", initPassword)
 		}
 	}
 	// 设置初始化标志为 true

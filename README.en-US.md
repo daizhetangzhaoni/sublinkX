@@ -20,7 +20,7 @@ Front-end based on: https://github.com/youlaitech/vue3-element-admin
 
 Backend using go+gin+gorm
 
-Default account admin password 123456 self-modification
+Default account is `admin`; on first startup a random password is generated automatically (or set via `SUBLINK_INIT_PASSWORD`). Please change it immediately after initialization.
 
 Because of the rewrite there are still a lot of layout structure and a little less functionality
 
@@ -92,4 +92,3 @@ Feel free to adjust any details as needed!
 
 ## Stargazers over time
 [![Stargazers over time](https://starchart.cc/gooaclok819/sublinkX.svg?variant=adaptive)](https://starchart.cc/gooaclok819/sublinkX)
-

@@ -21,7 +21,7 @@
 
 后端采用go+gin+gorm
 
-默认账号admin 密码123456  自行修改
+默认账号为 `admin`，首次启动会自动生成随机密码（可通过环境变量 `SUBLINK_INIT_PASSWORD` 指定），请在初始化后立即修改
 
 因为重写目前还有很多布局结构以及功能稍少
 
@@ -94,4 +94,3 @@ Feel free to adjust any details as needed!
 
 ## Stargazers over time
 [![Stargazers over time](https://starchart.cc/gooaclok819/sublinkX.svg?variant=adaptive)](https://starchart.cc/gooaclok819/sublinkX)
-
