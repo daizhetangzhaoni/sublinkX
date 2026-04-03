@@ -24,7 +24,7 @@ func GetToken(username string) (string, error) {
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
-	return token.SignedString(middlewares.Secret)
+	return token.SignedString(middlewares.GetJWTSecret())
 }
 
 // 获取captcha图形验证码

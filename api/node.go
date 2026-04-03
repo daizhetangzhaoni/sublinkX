@@ -83,7 +83,7 @@ func DocodeNodeName(nd *models.Node) (models.Node, error) { // 解码节点名�
 	}
 	return *nd, nil
 }
-func NodeUpdadte(c *gin.Context) {
+func NodeUpdate(c *gin.Context) {
 	// var node models.Node
 	NewName := c.PostForm("name")
 	Newlink := c.PostForm("link")
@@ -112,14 +112,17 @@ func NodeUpdadte(c *gin.Context) {
 		Link: Newlink,
 	}
 	var gns []models.GroupNode
-	if groups != nil || len(groups) > 0 {
+	if len(groups) > 0 {
 		for _, g := range groups {
+			trimmed := strings.TrimSpace(g)
+			if trimmed == "" {
+				continue
+			}
 			TempGn := models.GroupNode{
-				Name: strings.TrimSpace(g), // 去除分组名称两端空格
+				Name: trimmed, // 去除分组名称两端空格
 			}
 			gns = append(gns, TempGn) // 生成分组列表
 		}
-
 	}
 	err = OldNode.UpdateGroup(gns) // 更新分组
 	if err != nil {
@@ -140,6 +143,11 @@ func NodeUpdadte(c *gin.Context) {
 		"code": "00000",
 		"msg":  "更新成功",
 	})
+}
+
+// NodeUpdadte 保留旧函数名以兼容历史调用
+func NodeUpdadte(c *gin.Context) {
+	NodeUpdate(c)
 }
 
 // 获取节点列表
@@ -252,7 +260,7 @@ func NodeAdd(c *gin.Context) {
 		Name: name,
 		Link: link,
 	}
-	if link == "" && !strings.Contains(link, "://") {
+	if link == "" || !strings.Contains(link, "://") {
 		c.JSON(400, gin.H{
 			"msg": "link不能为空或者格式不正确,请检查链接是否包含协议头,例如 http:// 或 https://",
 		})
@@ -281,9 +289,13 @@ func NodeAdd(c *gin.Context) {
 	// 关联分组开始
 	if strings.TrimSpace(group) != "" { // 去除空格后判断分组是否为空
 		groups := strings.Split(group, ",") // 允许多个分组用逗号分隔
-		if groups != nil || len(groups) > 0 {
+		if len(groups) > 0 {
 			for _, g := range groups {
-				gn := &models.GroupNode{Name: g}
+				trimmed := strings.TrimSpace(g)
+				if trimmed == "" {
+					continue
+				}
+				gn := &models.GroupNode{Name: trimmed}
 				err = gn.Add()
 				if err != nil {
 					// 分组不存在

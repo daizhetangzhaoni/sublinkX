@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"sublink/models"
@@ -10,10 +11,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// 随机密钥
-
-// var Secret = []byte("sublink") // 秘钥
-var Secret = []byte(models.ReadConfig().JwtSecret) // 从配置文件读取JWT密钥
+// GetJWTSecret 从配置文件读取JWT密钥（每次调用时读取，避免运行期配置更新后密钥不生效）
+func GetJWTSecret() []byte {
+	return []byte(models.ReadConfig().JwtSecret)
+}
 
 // JwtClaims jwt声明
 type JwtClaims struct {
@@ -37,9 +38,16 @@ func AuthorToken(c *gin.Context) {
 			return
 		}
 	}
-	token := c.Request.Header.Get("Authorization")
-	if token == "" {
+	authHeader := strings.TrimSpace(c.Request.Header.Get("Authorization"))
+	if authHeader == "" {
 		c.JSON(400, gin.H{"msg": "请求未携带token"})
+		c.Abort()
+		return
+	}
+
+	token := extractToken(authHeader)
+	if token == "" {
+		c.JSON(400, gin.H{"msg": "token格式错误"})
 		c.Abort()
 		return
 	}
@@ -49,8 +57,6 @@ func AuthorToken(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	// 去掉Bearer前缀
-	token = strings.Replace(token, "Bearer ", "", -1)
 	mc, err := ParseToken(token)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -64,11 +70,22 @@ func AuthorToken(c *gin.Context) {
 	c.Next()
 }
 
+func extractToken(authHeader string) string {
+	token := strings.TrimSpace(authHeader)
+	if len(token) >= 7 && strings.EqualFold(token[:7], "Bearer ") {
+		token = strings.TrimSpace(token[7:])
+	}
+	return token
+}
+
 // ParseToken 解析JWT
 func ParseToken(tokenString string) (*JwtClaims, error) {
 	// 解析token
 	token, err := jwt.ParseWithClaims(tokenString, &JwtClaims{}, func(token *jwt.Token) (i interface{}, err error) {
-		return Secret, nil
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return GetJWTSecret(), nil
 	})
 	if err != nil {
 		return nil, err
